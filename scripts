@@ -1,0 +1,26 @@
+optimization_code:
+from ase.io import read
+from gpaw import GPAW, LCAO
+from ase.optimize import BFGS
+atoms = read('schwarzite_final_stable.cif')
+
+# 2. إعداد الحاسب بنمط LCAO (بدون الحاجة لـ Stress)
+calc = GPAW(mode=LCAO(),
+            basis='dzp',
+            xc='PBE',
+            kpts={'size': (3, 3, 3), 'gamma': True},
+            txt='gpaw_dzp_atoms_only.txt')
+
+atoms.calc = calc
+
+print("بدء تحسين مواضع الذرات فقط (لتفادي خطأ Stress)...")
+
+# 3. استخدام BFGS على atoms مباشرة (بدون UnitCellFilter)
+opt = BFGS(atoms)
+opt.run(fmax=0.05)
+
+# 4. حفظ الهيكل والنتائج
+energy_dzp = atoms.get_potential_energy()
+atoms.write('schwarzite_refined_positions.cif')
+
+print(f"تم التحسين! الطاقة بـ DZP هي: {energy_dzp:.4f} eV")
